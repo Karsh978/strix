@@ -8,12 +8,14 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install fastapi uvicorn playwright
-RUN playwright install --with-deps chromium
-
+# Copy repo content first
 COPY . .
+
+# Install dependencies directly
+RUN pip install --no-cache-dir fastapi uvicorn playwright
+RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
+RUN if [ -f pyproject.toml ]; then pip install --no-cache-dir .; fi
+RUN playwright install --with-deps chromium
 
 EXPOSE 8000
 
