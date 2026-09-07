@@ -1,20 +1,25 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
-# System Dependencies + Playwright Browsers setup
+# System Dependencies setup
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy repo content first
+# Copy all project files
 COPY . .
 
-# Install dependencies directly
-RUN pip install --no-cache-dir fastapi uvicorn playwright
-RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
-RUN if [ -f pyproject.toml ]; then pip install --no-cache-dir .; fi
+# Upgrade pip and install modern build backends (hatchling)
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel hatchling build
+
+# Install FastAPI, server dependencies, and Strix package
+RUN pip install --no-cache-dir fastapi uvicorn playwright pydantic requests
+RUN pip install --no-cache-dir --no-build-isolation . || pip install --no-cache-dir -e .
+
+# Install Playwright browser binaries
 RUN playwright install --with-deps chromium
 
 EXPOSE 8000
